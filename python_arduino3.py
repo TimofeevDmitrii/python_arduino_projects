@@ -1,5 +1,7 @@
-import serial
 
+import serial
+import csv
+import os
 import time
 
 #time.clock - secondmeter
@@ -25,29 +27,41 @@ def change_str_data_arduino(curr_str):
 data_arduino = []
 data_dict = []
 
-while True:
+fields = ["Date", "DHT22 temperature °C", "DHT22 humidity %", "DS18B20 temperature °C"] # Поля для заполнения таблицы в csv файле
+if not os.path.isfile('Data_from_arduino.csv'): #Проверяем наличие файла csv: если его нет, то записываем шапку для таблицы
+    with open('Data_from_arduino.csv', 'a', encoding='utf-8', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fields)
+            writer.writeheader()
+
+i = 0
+while i<288:
     for i in range(6):
         data_arduino.append(change_inlet_str(str(serial_arduino.readline())))
-    data_file = open('Data_from_arduino.txt', 'a')
+    #data_file = open('Data_from_arduino.txt', 'a')
     t = time.asctime()
-    data_file.write(t +'\n')
+    #data_file.write(t +'\n')
     print(t)
     for i in data_arduino:
         print(i)
-        data_file.write(i+'\n')
-    data_file.close()
+        #data_file.write(i+'\n')
+    #data_file.close()
     #print(data_arduino)
     for i in range(len(data_arduino)):
         data_arduino[i] = change_str_data_arduino(data_arduino[i])
     #print(data_arduino)
     data_dict.append({
         "Date": t, 
-        "DHT22_temperature, °C":data_arduino[1], 
-        "DHT22_Humidity, %":data_arduino[2],
-        "DS18B20_temperature, °C":data_arduino[4],
+        "DHT22 temperature °C": data_arduino[1], 
+        "DHT22 humidity %": data_arduino[2],
+        "DS18B20 temperature °C": data_arduino[4],
         })
+    with open('Data_from_arduino.csv', 'a', encoding='utf-8', newline='') as csvfile:
+        writer = csv.DictWriter(csvfile, fields)
+        writer.writerows(data_dict)
     #print (data_dict)
+    data_dict = []
     data_arduino = []
+    i += 1
 
 # def change_datalist(curr_str):
 #     del_tuple = ('Temperature','Humidity',' ','°C','=','%')
